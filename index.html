@@ -380,21 +380,60 @@ document.getElementById('chatInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') sendMsg();
 });
 
-// Fake stats counter animasi
-function animateCount(el, target, suffix='') {
+const API_URL = 'http://node.sixseven.atheenaa.my.id:3457';
+
+function animateCount(el, target) {
   let current = 0;
-  const step = Math.ceil(target / 40);
+  const step = Math.ceil(target / 40) || 1;
   const timer = setInterval(() => {
     current = Math.min(current + step, target);
-    el.textContent = current.toLocaleString('id-ID') + suffix;
+    el.textContent = current.toLocaleString('id-ID');
     if (current >= target) clearInterval(timer);
-  }, 30);
+  }, 25);
+}
+
+async function fetchStats() {
+  try {
+    const res = await fetch(API_URL + '/stats');
+    const data = await res.json();
+
+    animateCount(document.getElementById('stat-users'), data.totalUsers);
+    animateCount(document.getElementById('stat-msg'), data.msgToday);
+    document.getElementById('stat-uptime').textContent = data.uptime;
+
+    // Update aktivitas
+    if (data.activity && data.activity.length) {
+      const colors = ['var(--accent2)', 'var(--accent)', 'var(--accent3)', 'var(--red)'];
+      const box = document.querySelector('#sec-dashboard .card');
+      const rows = box.querySelectorAll('.activity-row');
+      data.activity.slice(0, 4).forEach((act, i) => {
+        if (!rows[i]) return;
+        const dot = rows[i].querySelector('.act-dot');
+        const text = rows[i].querySelector('.act-text');
+        const time = rows[i].querySelector('.act-time');
+        dot.style.background = colors[i % colors.length];
+        text.textContent = '@' + act.user + ' — ' + act.command;
+        const diff = Math.floor((Date.now() - act.time) / 60000);
+        time.textContent = diff < 1 ? 'baru' : diff + 'm';
+      });
+    }
+
+    // Update status online
+    document.querySelector('.online-text').textContent = 'Online';
+    document.querySelector('.online-dot').style.background = 'var(--accent2)';
+
+  } catch(e) {
+    document.getElementById('stat-users').textContent = '—';
+    document.getElementById('stat-msg').textContent = '—';
+    document.getElementById('stat-uptime').textContent = '—';
+    document.querySelector('.online-text').textContent = 'Offline';
+    document.querySelector('.online-dot').style.background = 'var(--red)';
+  }
 }
 
 window.addEventListener('load', () => {
-  animateCount(document.getElementById('stat-users'), 1247);
-  animateCount(document.getElementById('stat-msg'), 384);
-  document.getElementById('stat-uptime').textContent = '99.8%';
+  fetchStats();
+  setInterval(fetchStats, 30000);
 });
 </script>
 </body>
