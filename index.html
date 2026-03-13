@@ -380,14 +380,12 @@ document.getElementById('chatInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') sendMsg();
 });
 
-const API_BASE = 'https://hip-lights-drive.loca.lt';
+const API_BASE = 'https://jar-literacy-developments-trees.trycloudflare.com';
 let API_URL = API_BASE;
 
 async function getApiUrl() {
     try {
-        const res = await fetch(API_BASE + '/tunnel', {
-      headers: { 'bypass-tunnel-reminder': 'true' }
-    });
+        const res = await fetch(API_BASE + '/tunnel');
         const data = await res.json();
         if (data.url) API_URL = data.url;
     } catch {}
@@ -406,9 +404,7 @@ function animateCount(el, target) {
 async function fetchStats() {
   await getApiUrl();
   try {
-    const res = await fetch(API_URL + '/stats', {
-      headers: { 'bypass-tunnel-reminder': 'true' }
-    });
+    const res = await fetch(API_URL + '/stats');
     const data = await res.json();
 
     animateCount(document.getElementById('stat-users'), data.totalUsers);
