@@ -385,7 +385,9 @@ let API_URL = API_BASE;
 
 async function getApiUrl() {
     try {
-        const res = await fetch(API_BASE + '/tunnel');
+        const res = await fetch(API_BASE + '/tunnel', {
+      headers: { 'bypass-tunnel-reminder': 'true' }
+    });
         const data = await res.json();
         if (data.url) API_URL = data.url;
     } catch {}
@@ -404,7 +406,9 @@ function animateCount(el, target) {
 async function fetchStats() {
   await getApiUrl();
   try {
-    const res = await fetch(API_URL + '/stats');
+    const res = await fetch(API_URL + '/stats', {
+      headers: { 'bypass-tunnel-reminder': 'true' }
+    });
     const data = await res.json();
 
     animateCount(document.getElementById('stat-users'), data.totalUsers);
