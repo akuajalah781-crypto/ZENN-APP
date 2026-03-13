@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ZENN Bot</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0a0a;--bg2:#141414;--bg3:#1c1c1c;
+  --border:#252525;--border2:#303030;
+  --text:#f0f0f0;--text2:#777;--text3:#444;
+  --accent:#7c6fe0;--accent2:#5cc9a0;--accent3:#e8a832;
+  --red:#e04f4f;
+}
+html,body{height:100%;background:var(--bg);font-family:'Sora',sans-serif;color:var(--text);overflow:hidden}
+
+.app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;position:relative}
+
+/* HEADER */
+.header{background:var(--bg2);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--border);flex-shrink:0}
+.header-left{display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff;letter-spacing:-0.5px}
+.header-title{font-size:14px;font-weight:600;color:var(--text)}
+.header-sub{font-size:10px;color:var(--text2);margin-top:1px}
+.online-badge{display:flex;align-items:center;gap:5px;background:#0d2b1e;border:0.5px solid #1a4a30;border-radius:20px;padding:4px 10px}
+.online-dot{width:6px;height:6px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.online-text{font-size:10px;color:var(--accent2)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:14px 14px 6px;scroll-behavior:smooth}
+.content::-webkit-scrollbar{width:3px}
+.content::-webkit-scrollbar-track{background:transparent}
+.content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* SECTIONS */
+.section{display:none;animation:fadeIn 0.2s ease}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* NAV */
+.nav{background:var(--bg2);border-top:0.5px solid var(--border);display:flex;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{flex:1;padding:9px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;color:var(--text3);font-size:9px;font-family:'Sora',sans-serif;transition:color 0.15s;position:relative}
+.nav-item.active{color:var(--accent)}
+.nav-item.active::after{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:20px;height:2px;background:var(--accent);border-radius:0 0 2px 2px}
+.nav-icon{width:19px;height:19px}
+
+/* CARDS */
+.card{background:var(--bg2);border-radius:12px;padding:14px;border:0.5px solid var(--border);margin-bottom:10px}
+.card-title{font-size:10px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.8px;font-weight:600}
+
+/* DASHBOARD */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.stat{background:var(--bg2);border-radius:12px;padding:13px;border:0.5px solid var(--border)}
+.stat-label{font-size:10px;color:var(--text2);margin-bottom:5px}
+.stat-val{font-size:22px;font-weight:600;line-height:1}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.activity-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)}
+.activity-row:last-child{border:none;padding-bottom:0}
+.act-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.act-text{font-size:12px;color:var(--text);flex:1}
+.act-time{font-size:10px;color:var(--text3)}
+
+/* INFO */
+.ver-badge{font-size:10px;padding:3px 9px;border-radius:20px;background:#0d2b1e;color:var(--accent2);border:0.5px solid #1a4a30}
+.update-date{font-size:11px;color:var(--text3);margin:6px 0 10px}
+.changelog-item{display:flex;align-items:flex-start;gap:8px;padding:5px 0;font-size:12px;color:var(--text2)}
+.changelog-dot{width:4px;height:4px;border-radius:50%;background:var(--border2);margin-top:6px;flex-shrink:0}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border);font-size:12px}
+.info-row:last-child{border:none;padding-bottom:0}
+.info-key{color:var(--text2)}
+.info-val{color:var(--text);font-weight:500}
+.info-val.on{color:var(--accent2)}
+
+/* TOOLS */
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tool-card{background:var(--bg2);border-radius:12px;padding:13px;border:0.5px solid var(--border);cursor:pointer;transition:border-color 0.15s,background 0.15s;display:flex;flex-direction:column;gap:9px}
+.tool-card:active{background:var(--bg3);border-color:var(--border2)}
+.tool-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.tool-name{font-size:12px;font-weight:600;color:var(--text)}
+.tool-desc{font-size:11px;color:var(--text2);line-height:1.4}
+
+/* CHAT */
+.chat-header-card{background:var(--bg2);border-radius:12px;padding:12px;border:0.5px solid var(--border);margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.owner-av{width:42px;height:42px;border-radius:50%;background:#1a1640;border:1.5px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#CECBF6;flex-shrink:0}
+.chat-messages{background:var(--bg2);border-radius:12px;border:0.5px solid var(--border);margin-bottom:10px;padding:12px;height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.chat-messages::-webkit-scrollbar{width:2px}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.msg{max-width:82%;padding:8px 11px;font-size:12px;line-height:1.5;animation:fadeIn 0.2s ease}
+.msg.owner{background:#1a1640;color:#CECBF6;align-self:flex-start;border-radius:3px 12px 12px 12px}
+.msg.user{background:var(--bg3);color:var(--text);align-self:flex-end;border-radius:12px 3px 12px 12px;border:0.5px solid var(--border2)}
+.chat-input-row{display:flex;gap:8px}
+.chat-input{flex:1;background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;padding:10px 13px;font-size:12px;color:var(--text);font-family:'Sora',sans-serif;outline:none;transition:border-color 0.15s}
+.chat-input:focus{border-color:var(--accent)}
+.send-btn{background:var(--accent);border:none;border-radius:10px;padding:0 16px;cursor:pointer;color:#fff;font-size:12px;font-family:'Sora',sans-serif;font-weight:500;transition:opacity 0.15s}
+.send-btn:active{opacity:0.8}
+
+/* KONTAK */
+.kontak-profile{background:var(--bg2);border-radius:12px;padding:20px 14px;border:0.5px solid var(--border);margin-bottom:12px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.kontak-av{width:68px;height:68px;border-radius:50%;background:#1a1640;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;color:#CECBF6}
+.kontak-name{font-size:15px;font-weight:600;color:var(--text)}
+.kontak-role{font-size:11px;color:var(--text2)}
+.kontak-btns{display:flex;flex-direction:column;gap:8px}
+.kontak-btn{display:flex;align-items:center;gap:12px;background:var(--bg2);border-radius:12px;padding:13px;border:0.5px solid var(--border);cursor:pointer;text-decoration:none;transition:border-color 0.15s}
+.kontak-btn:active{background:var(--bg3)}
+.kontak-btn-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.kontak-btn-label{font-size:12px;font-weight:600;color:var(--text)}
+.kontak-btn-sub{font-size:10px;color:var(--text2);margin-top:2px}
+.chevron{margin-left:auto;color:var(--text3);flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">Z</div>
+      <div>
+        <div class="header-title">ZENN Bot</div>
+        <div class="header-sub">Mini App v1.0.0</div>
+      </div>
+    </div>
+    <div class="online-badge">
+      <div class="online-dot"></div>
+      <span class="online-text">Online</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="section active" id="sec-dashboard">
+      <div class="grid2">
+        <div class="stat">
+          <div class="stat-label">Total users</div>
+          <div class="stat-val" style="color:var(--accent2)" id="stat-users">—</div>
+          <div class="stat-sub">terdaftar</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Pesan hari ini</div>
+          <div class="stat-val" style="color:var(--accent)" id="stat-msg">—</div>
+          <div class="stat-sub">sejak 00:00</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Uptime</div>
+          <div class="stat-val" style="color:var(--accent3)" id="stat-uptime">—</div>
+          <div class="stat-sub">hari ini</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Command</div>
+          <div class="stat-val">11</div>
+          <div class="stat-sub">aktif</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Aktivitas terbaru</div>
+        <div class="activity-row"><div class="act-dot" style="background:var(--accent2)"></div><div class="act-text">@onlynormalhuman — /ai</div><div class="act-time">1m</div></div>
+        <div class="activity-row"><div class="act-dot" style="background:var(--accent)"></div><div class="act-text">@user123 — /yt</div><div class="act-time">4m</div></div>
+        <div class="activity-row"><div class="act-dot" style="background:var(--accent3)"></div><div class="act-text">@randomuser — /tt</div><div class="act-time">7m</div></div>
+        <div class="activity-row"><div class="act-dot" style="background:var(--accent2)"></div><div class="act-text">@newuser99 — /start</div><div class="act-time">12m</div></div>
+      </div>
+    </div>
+
+    <!-- INFO -->
+    <div class="section" id="sec-info">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:14px;font-weight:600;color:var(--text)">v1.0.0</span>
+          <span class="ver-badge">Latest</span>
+        </div>
+        <div class="update-date">13 Maret 2026</div>
+        <div class="changelog-item"><div class="changelog-dot"></div>Initial release ZENN Telegram Bot</div>
+        <div class="changelog-item"><div class="changelog-dot"></div>Downloader YT audio, video, TikTok, Instagram</div>
+        <div class="changelog-item"><div class="changelog-dot"></div>AI chat via HuggingFace Llama 3.1 8B</div>
+        <div class="changelog-item"><div class="changelog-dot"></div>Sticker maker & image converter</div>
+        <div class="changelog-item"><div class="changelog-dot"></div>Menu navigasi inline keyboard</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Info bot</div>
+        <div class="info-row"><span class="info-key">Nama</span><span class="info-val">ZENN Bot</span></div>
+        <div class="info-row"><span class="info-key">Versi</span><span class="info-val">1.0.0</span></div>
+        <div class="info-row"><span class="info-key">Engine</span><span class="info-val">Telegraf.js</span></div>
+        <div class="info-row"><span class="info-key">AI Model</span><span class="info-val">Llama 3.1 8B</span></div>
+        <div class="info-row"><span class="info-key">Host</span><span class="info-val">Pterodactyl</span></div>
+        <div class="info-row"><span class="info-key">Owner</span><span class="info-val">@onlynormalhuman</span></div>
+        <div class="info-row"><span class="info-key">Status</span><span class="info-val on">Online</span></div>
+      </div>
+    </div>
+
+    <!-- TOOLS -->
+    <div class="section" id="sec-tools">
+      <div class="tools-grid">
+        <div class="tool-card" onclick="tgClose('/yt')">
+          <div class="tool-icon" style="background:#1a1640">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#CECBF6" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          </div>
+          <div class="tool-name">YT Audio</div>
+          <div class="tool-desc">/yt — download lagu YouTube</div>
+        </div>
+        <div class="tool-card" onclick="tgClose('/ytvid')">
+          <div class="tool-icon" style="background:#042C53">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#85B7EB" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          </div>
+          <div class="tool-name">YT Video</div>
+          <div class="tool-desc">/ytvid — download video YT</div>
+        </div>
+        <div class="tool-card" onclick="tgClose('/tt')">
+          <div class="tool-icon" style="background:#1f1400">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FAC775" stroke-width="2"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+          </div>
+          <div class="tool-name">TikTok</div>
+          <div class="tool-desc">/tt — tanpa watermark</div>
+        </div>
+        <div class="tool-card" onclick="tgClose('/ig')">
+          <div class="tool-icon" style="background:#04342C">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </div>
+          <div class="tool-name">Instagram</div>
+          <div class="tool-desc">/ig — foto & video</div>
+        </div>
+        <div class="tool-card" onclick="tgClose('/ai')">
+          <div class="tool-icon" style="background:#1a1640">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#CECBF6" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          </div>
+          <div class="tool-name">AI Chat</div>
+          <div class="tool-desc">/ai — Llama 3.1 8B</div>
+        </div>
+        <div class="tool-card" onclick="tgClose('/sticker')">
+          <div class="tool-icon" style="background:#04342C">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <div class="tool-name">Sticker</div>
+          <div class="tool-desc">/sticker — foto ke sticker</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT OWNER -->
+    <div class="section" id="sec-chat">
+      <div class="chat-header-card">
+        <div class="owner-av">NH</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">@onlynormalhuman</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px">Owner & Developer ZENN</div>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:4px">
+            <div style="width:5px;height:5px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite"></div>
+            <span style="font-size:10px;color:var(--accent2)">Online</span>
+          </div>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatbox">
+        <div class="msg owner">Halo! Ada yang bisa dibantu? Tanya seputar ZENN Bot di sini.</div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chatInput" placeholder="Tulis pesan..." />
+        <button class="send-btn" onclick="sendMsg()">Kirim</button>
+      </div>
+    </div>
+
+    <!-- KONTAK -->
+    <div class="section" id="sec-kontak">
+      <div class="kontak-profile">
+        <div class="kontak-av">NH</div>
+        <div class="kontak-name">@onlynormalhuman</div>
+        <div class="kontak-role">Owner & Developer ZENN Bot</div>
+      </div>
+      <div class="kontak-btns">
+        <a class="kontak-btn" href="https://wa.me/6283166570663" target="_blank">
+          <div class="kontak-btn-icon" style="background:#0a2e1a">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#5DCAA5"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          </div>
+          <div>
+            <div class="kontak-btn-label">WhatsApp Owner</div>
+            <div class="kontak-btn-sub">Chat langsung via WA</div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+        <a class="kontak-btn" href="https://whatsapp.com/channel/0029VbCPyhd89inqBrrc6e2h" target="_blank">
+          <div class="kontak-btn-icon" style="background:#0a2e1a">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+          </div>
+          <div>
+            <div class="kontak-btn-label">Channel WhatsApp</div>
+            <div class="kontak-btn-sub">Update & info bot terbaru</div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+        <a class="kontak-btn" href="https://t.me/onlynormalhuman" target="_blank">
+          <div class="kontak-btn-icon" style="background:#042C53">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#85B7EB"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+          </div>
+          <div>
+            <div class="kontak-btn-label">Telegram Owner</div>
+            <div class="kontak-btn-sub">@onlynormalhuman</div>
+          </div>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <button class="nav-item active" onclick="switchTab('dashboard',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="switchTab('info',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Info
+    </button>
+    <button class="nav-item" onclick="switchTab('tools',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      Tools
+    </button>
+    <button class="nav-item" onclick="switchTab('chat',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Chat
+    </button>
+    <button class="nav-item" onclick="switchTab('kontak',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Kontak
+    </button>
+  </nav>
+
+</div>
+
+<script>
+// Telegram WebApp init
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#0a0a0a');
+  tg.setBackgroundColor('#0a0a0a');
+}
+
+// Tab switcher
+function switchTab(name, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+// Tools — kirim command ke bot lalu tutup
+function tgClose(cmd) {
+  if (tg) {
+    tg.sendData(cmd);
+  }
+}
+
+// Chat simulasi
+function sendMsg() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const box = document.getElementById('chatbox');
+  const u = document.createElement('div');
+  u.className = 'msg user';
+  u.textContent = msg;
+  box.appendChild(u);
+  input.value = '';
+  box.scrollTop = box.scrollHeight;
+  setTimeout(() => {
+    const r = document.createElement('div');
+    r.className = 'msg owner';
+    r.textContent = 'Pesan kamu sudah diterima! Owner akan segera membalas via Telegram atau WA.';
+    box.appendChild(r);
+    box.scrollTop = box.scrollHeight;
+  }, 800);
+}
+document.getElementById('chatInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMsg();
+});
+
+// Fake stats counter animasi
+function animateCount(el, target, suffix='') {
+  let current = 0;
+  const step = Math.ceil(target / 40);
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    el.textContent = current.toLocaleString('id-ID') + suffix;
+    if (current >= target) clearInterval(timer);
+  }, 30);
+}
+
+window.addEventListener('load', () => {
+  animateCount(document.getElementById('stat-users'), 1247);
+  animateCount(document.getElementById('stat-msg'), 384);
+  document.getElementById('stat-uptime').textContent = '99.8%';
+});
+</script>
+</body>
+</html>
